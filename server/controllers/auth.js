@@ -17,6 +17,9 @@ export const register = async (req, res) => {
             impressions,
         } = req.body;
 
+        const user = await User.findOne({ email: email });
+        if (user) return res.status(400).json({ msg: "User already exist. " });
+
         const salt = await bcrypt.genSalt(process.env.GARAM);
         const passwordHash = await bcrypt.hash(password, salt);
 
@@ -47,13 +50,13 @@ export const login = async (req, res) => {
             return res.status(400).json({ msg: "User does not exist. " });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log("isMatch", isMatch)
+        console.log("isMatch", isMatch);
         if (!isMatch)
             return res.status(400).json({ msg: "Invalid credentials. " });
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
 
-        const objUser = {...user._doc}
+        const objUser = { ...user._doc };
         delete objUser.password;
         res.status(200).json({ token, objUser });
     } catch (err) {
